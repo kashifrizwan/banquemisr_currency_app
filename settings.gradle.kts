@@ -15,4 +15,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "AndelaBanqueMisrTest"
 include(":app")
- 
+include(":presentation")
+include(":domain")
+include(":data")
+include(":ui")
