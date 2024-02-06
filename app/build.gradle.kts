@@ -1,6 +1,8 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("kotlin-kapt")
+    id("dagger.hilt.android.plugin")
 }
 
 android {
@@ -37,10 +39,14 @@ android {
 
 dependencies {
     implementation(project(":ui"))
-    implementation("androidx.fragment:fragment-ktx:1.6.2")
+    implementation(project(":presentation"))
+    implementation(project(":domain"))
+    implementation(project(":data"))
 
+    implementation("androidx.fragment:fragment-ktx:1.6.2")
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.google.dagger:hilt-android:2.42")
-    //kapt "com.google.dagger:hilt-compiler:2.42"
+    kapt("com.google.dagger:hilt-compiler:2.42")
 
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
