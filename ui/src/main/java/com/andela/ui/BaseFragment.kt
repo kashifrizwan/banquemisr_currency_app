@@ -12,7 +12,7 @@ abstract class BaseFragment<V>(
 
     abstract val viewModel: BaseViewModel<V>
 
-    protected abstract fun renderViewState(viewState: V?)
+    protected abstract fun renderViewState(viewState: V)
     protected abstract fun notifyDialogCommand(message: String)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

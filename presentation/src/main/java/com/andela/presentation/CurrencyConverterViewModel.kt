@@ -19,62 +19,74 @@ class CurrencyConverterViewModel @Inject constructor(
     private val getExchangeRatesUseCase: GetExchangeRatesUseCase
 ) : BaseViewModel<CurrencyConverterViewState>() {
 
+    override fun initialState() = CurrencyConverterViewState()
+
     private var getCurrenciesJob: Job? = null
-    private var getExchangeRates: Job? = null
+    private var getExchangeRatesJob: Job? = null
 
     fun onFragmentCreated() {
         if (getCurrenciesJob?.isActive == true) { getCurrenciesJob?.cancel() }
         getCurrenciesJob = viewModelScope.launch {
+            updateProgressBarVisibility(isVisible = true)
             when (val result = getCurrenciesUseCase.execute()) {
                 is Currencies -> updateViewState(
-                    CurrencyConverterViewState(
+                    currentViewState().copy(
+                        isLoading = false,
                         availableCurrenciesList = result.currencies.keys.toList().sorted()
                     )
                 )
-                is CurrenciesDomainModel.Error -> notifyDialogCommand(result.message)
+                is CurrenciesDomainModel.Error -> {
+                    updateProgressBarVisibility(isVisible = false)
+                    notifyDialogCommand(result.message)
+                }
             }
         }
     }
 
     fun onCurrencyChangedAction(fromCurrency: String, toCurrency: String) {
-        if (getExchangeRates?.isActive == true) { getExchangeRates?.cancel() }
-        getExchangeRates = viewModelScope.launch {
+        if (getExchangeRatesJob?.isActive == true) { getExchangeRatesJob?.cancel() }
+        getExchangeRatesJob = viewModelScope.launch {
+            updateProgressBarVisibility(isVisible = true)
             when (
                 val response = getExchangeRatesUseCase.execute(
                     request = ExchangeRatesRequestDomainModel(fromCurrency, toCurrency)
                 )
             ) {
-                is ExchangeRatesSuccess -> updateExchangeRateForSelectedCurrencies(
-                    rate = response.rates[toCurrency] ?: 1.0
+                is ExchangeRatesSuccess -> updateViewState(
+                    currentViewState().copy(
+                        isLoading = false,
+                        exchangeRateForSelectedCurrencies = response.rates[toCurrency] ?: 1.0
+                    )
                 )
-                is ExchangeRatesDomainModel.Error -> notifyDialogCommand(response.message)
+                is ExchangeRatesDomainModel.Error -> {
+                    updateProgressBarVisibility(isVisible = false)
+                    notifyDialogCommand(response.message)
+                }
             }
         }
     }
 
-    private fun updateExchangeRateForSelectedCurrencies(rate: Double) {
-        updateViewState(
-            currentViewState()?.copy(
-                exchangeRateForSelectedCurrencies = rate
-            )
-        )
-    }
-
     fun onInputAmountChangedAction(inputAmount: Double, isReverse: Boolean): Double {
         val calculatedRate = if (isReverse) {
-            inputAmount / (currentViewState()?.exchangeRateForSelectedCurrencies ?: 1.0)
+            inputAmount / (currentViewState().exchangeRateForSelectedCurrencies)
         } else {
-            inputAmount * (currentViewState()?.exchangeRateForSelectedCurrencies ?: 1.0)
+            inputAmount * (currentViewState().exchangeRateForSelectedCurrencies)
         }
         return String.format("%.3f", calculatedRate).toDouble()
     }
 
     fun onCurrenciesSwappedAction() {
-        val currentRate = currentViewState()?.exchangeRateForSelectedCurrencies ?: 1.0
-        val reversedRate = 1/currentRate
         updateViewState(
-            currentViewState()?.copy(
-                exchangeRateForSelectedCurrencies = reversedRate
+            currentViewState().copy(
+                exchangeRateForSelectedCurrencies = 1 / (currentViewState().exchangeRateForSelectedCurrencies)
+            )
+        )
+    }
+
+    private fun updateProgressBarVisibility(isVisible: Boolean) {
+        updateViewState(
+            currentViewState().copy(
+                isLoading = isVisible
             )
         )
     }

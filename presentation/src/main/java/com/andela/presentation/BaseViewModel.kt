@@ -3,14 +3,16 @@ package com.andela.presentation
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 
-open class BaseViewModel<V> : ViewModel() {
-    val viewState: MutableLiveData<V?> = MutableLiveData()
+abstract class BaseViewModel<V> : ViewModel() {
+    val viewState: MutableLiveData<V> = MutableLiveData()
     val dialogCommand: MutableLiveData<String> = MutableLiveData()
 
-    protected fun currentViewState() = viewState.value
+    abstract fun initialState(): V
 
-    protected fun updateViewState(updatedViewState: V?) {
-        viewState.postValue(updatedViewState)
+    fun currentViewState(): V = viewState.value ?: initialState()
+
+    protected fun updateViewState(updatedViewState: V) {
+        viewState.postValue(updatedViewState ?: initialState())
     }
 
     protected fun notifyDialogCommand(message: String) {

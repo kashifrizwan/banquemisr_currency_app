@@ -6,7 +6,9 @@ import android.widget.AdapterView
 import android.widget.AdapterView.OnItemSelectedListener
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ProgressBar
 import android.widget.Spinner
+import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import com.andela.presentation.CurrencyConverterViewModel
 import com.andela.presentation.CurrencyConverterViewState
@@ -32,6 +34,7 @@ class CurrencyConverterFragment : BaseFragment<CurrencyConverterViewState>(
     private val baseCurrencyEdittext: EditText get() = requireView().findViewById(R.id.editText_base_currency)
     private val toCurrencyEditText: EditText get() = requireView().findViewById(R.id.editText_to_currency)
     private val swapButton: Button get() = requireView().findViewById(R.id.btn_swap)
+    private val progressBar: ProgressBar get() = requireView().findViewById(R.id.progress_bar)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -44,12 +47,11 @@ class CurrencyConverterFragment : BaseFragment<CurrencyConverterViewState>(
         setupFocusChangeListeners()
     }
 
-    override fun renderViewState(currencyConverterViewState: CurrencyConverterViewState?) {
-        currencyConverterViewState?.let { viewState ->
-            currenciesAdapter.addAll(viewState.availableCurrenciesList)
-            currenciesAdapter.notifyDataSetChanged()
-            onCurrencyValueChanged(baseCurrencyEdittext.text.toString(), toCurrencyEditText, isBaseAmount = true)
-        }
+    override fun renderViewState(viewState: CurrencyConverterViewState) {
+        progressBar.isVisible = viewState.isLoading
+        currenciesAdapter.addAll(viewState.availableCurrenciesList)
+        currenciesAdapter.notifyDataSetChanged()
+        onCurrencyValueChanged(baseCurrencyEdittext.text.toString(), toCurrencyEditText, isBaseAmount = true)
     }
 
     override fun notifyDialogCommand(message: String) {
@@ -106,7 +108,7 @@ class CurrencyConverterFragment : BaseFragment<CurrencyConverterViewState>(
 
     private fun onCurrencyValueChanged(amount: String, editText: EditText, isBaseAmount: Boolean) {
         val calculatedAmount = viewModel.onInputAmountChangedAction(
-            inputAmount = amount.toDoubleOrNull() ?: 0.0,
+            inputAmount = amount.toDoubleOrNull() ?: 1.0,
             isReverse = isBaseAmount.not()
         )
         editText.setText(calculatedAmount.toString())
