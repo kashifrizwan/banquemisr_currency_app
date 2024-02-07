@@ -1,11 +1,9 @@
 package com.andela.ui
 
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
 import android.view.View
 import android.widget.AdapterView
-import android.widget.ArrayAdapter
+import android.widget.AdapterView.OnItemSelectedListener
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Spinner
@@ -13,9 +11,12 @@ import androidx.fragment.app.viewModels
 import com.andela.presentation.CurrencyConverterViewModel
 import com.andela.presentation.CurrencyConverterViewState
 import com.andela.ui.adapter.CurrenciesSpinnerAdapter
-import com.andela.ui.ext.showAlertDialog
+import com.andela.ui.utilities.CurrenciesTextWatcher
+import com.andela.ui.utilities.showAlertDialog
+import com.andela.ui.utilities.updateTextWatcher
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+
 
 @AndroidEntryPoint
 class CurrencyConverterFragment : BaseFragment<CurrencyConverterViewState>(
@@ -23,7 +24,8 @@ class CurrencyConverterFragment : BaseFragment<CurrencyConverterViewState>(
 ) {
     override val viewModel: CurrencyConverterViewModel by viewModels()
 
-    //@Inject lateinit var currenciesAdapter: CurrenciesSpinnerAdapter
+    @Inject
+    lateinit var currenciesAdapter: CurrenciesSpinnerAdapter
 
     private val baseCurrencySpinner: Spinner get() = requireView().findViewById(R.id.spinner_base_currency)
     private val toCurrencySpinner: Spinner get() = requireView().findViewById(R.id.spinner_to_currency)
@@ -34,18 +36,20 @@ class CurrencyConverterFragment : BaseFragment<CurrencyConverterViewState>(
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         viewModel.onFragmentCreated()
-        /*baseCurrencySpinner.adapter = currenciesAdapter
-        toCurrencySpinner.adapter = currenciesAdapter*/
+        baseCurrencySpinner.adapter = currenciesAdapter
+        toCurrencySpinner.adapter = currenciesAdapter
+
+        setupClickListeners()
+        setupOnItemChangeListeners()
+        setupFocusChangeListeners()
     }
 
-    override fun renderViewState(viewState: CurrencyConverterViewState?) {
-        /*currenciesAdapter.addAll(viewState?.availableCurrenciesList ?: listOf())
-        currenciesAdapter.notifyDataSetChanged()*/
-        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, viewState?.availableCurrenciesList ?: listOf())
-        baseCurrencySpinner.adapter = adapter
-        toCurrencySpinner.adapter = adapter
-
-        toCurrencyEditText.setText(viewState?.toAmount.toString())
+    override fun renderViewState(currencyConverterViewState: CurrencyConverterViewState?) {
+        currencyConverterViewState?.let { viewState ->
+            currenciesAdapter.addAll(viewState.availableCurrenciesList)
+            currenciesAdapter.notifyDataSetChanged()
+            onCurrencyValueChanged(baseCurrencyEdittext.text.toString(), toCurrencyEditText, isBaseAmount = true)
+        }
     }
 
     override fun notifyDialogCommand(message: String) {
@@ -57,43 +61,62 @@ class CurrencyConverterFragment : BaseFragment<CurrencyConverterViewState>(
             val baseSpinnerSelectedPosition = baseCurrencySpinner.selectedItemPosition
             baseCurrencySpinner.setSelection(toCurrencySpinner.selectedItemPosition)
             toCurrencySpinner.setSelection(baseSpinnerSelectedPosition)
+            viewModel.onCurrenciesSwappedAction()
         }
     }
 
     private fun setupOnItemChangeListeners() {
-        baseCurrencySpinner.onItemSelectedListener = object:
-            AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                onCurrencyChanged()
-            }
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
-        }
+        baseCurrencySpinner.onItemSelectedListener = onCurrencySelectedListener
+        toCurrencySpinner.onItemSelectedListener = onCurrencySelectedListener
+    }
 
-        toCurrencySpinner.onItemSelectedListener = object:
-            AdapterView.OnItemSelectedListener {
+    private val onCurrencySelectedListener: OnItemSelectedListener by lazy {
+        object: OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                onCurrencyChanged()
+                if (position != 0) {
+                    viewModel.onCurrencyChangedAction(
+                        fromCurrency = baseCurrencySpinner.selectedItem.toString(),
+                        toCurrency = toCurrencySpinner.selectedItem.toString()
+                    )
+                }
             }
             override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
     }
 
-    private fun setupOnTextChangeListeners() {
-        baseCurrencyEdittext.addTextChangedListener(object : TextWatcher {
-            override fun afterTextChanged(s: Editable?) {
-                /*viewModel.onBaseAmountChanged(
-                    baseAmount = binding.editTextBaseCurrency.text.toString().toDoubleOrNull() ?: 0.0
-                )*/
-            }
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-        })
+    private fun setupFocusChangeListeners() {
+        baseCurrencyEdittext.onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus ->
+            baseCurrencyEdittext.updateTextWatcher(
+                isActive = hasFocus,
+                textWatcher= baseCurrencyTextChangeListener,
+                adjacentInputView = toCurrencyEditText,
+                adjacentTextWatcher = toCurrencyTextChangeListener
+            )
+        }
+
+        toCurrencyEditText.onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus ->
+            toCurrencyEditText.updateTextWatcher(
+                isActive = hasFocus,
+                textWatcher= toCurrencyTextChangeListener,
+                adjacentInputView = baseCurrencyEdittext,
+                adjacentTextWatcher = baseCurrencyTextChangeListener
+            )
+        }
     }
 
-    private fun onCurrencyChanged() {
-        viewModel.onCurrencyChangeAction(
-            fromCurrency = baseCurrencySpinner.selectedItem.toString(),
-            toCurrency = toCurrencySpinner.selectedItem.toString()
+    private fun onCurrencyValueChanged(amount: String, editText: EditText, isBaseAmount: Boolean) {
+        val calculatedAmount = viewModel.onInputAmountChangedAction(
+            inputAmount = amount.toDoubleOrNull() ?: 0.0,
+            isReverse = isBaseAmount.not()
         )
+        editText.setText(calculatedAmount.toString())
+    }
+
+    private val baseCurrencyTextChangeListener: CurrenciesTextWatcher by lazy {
+        CurrenciesTextWatcher(::onCurrencyValueChanged, toCurrencyEditText, isBaseAmount = true)
+    }
+
+    private val toCurrencyTextChangeListener: CurrenciesTextWatcher by lazy {
+        CurrenciesTextWatcher(::onCurrencyValueChanged, baseCurrencyEdittext, isBaseAmount = false)
     }
 }

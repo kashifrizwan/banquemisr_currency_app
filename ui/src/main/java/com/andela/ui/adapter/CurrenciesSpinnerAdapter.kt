@@ -8,5 +8,5 @@ class CurrenciesSpinnerAdapter(
 ) : ArrayAdapter<String>(
     context,
     android.R.layout.simple_spinner_dropdown_item,
-    listOf<String>()
+    arrayListOf<String>()
 )

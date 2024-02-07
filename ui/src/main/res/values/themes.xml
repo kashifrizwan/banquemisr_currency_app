@@ -1,0 +1,13 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="SpinnerTheme">
+        <item name="android:background">@android:drawable/btn_dropdown</item>
+        <item name="android:spinnerMode">dropdown</item>
+        <item name="android:dropDownWidth">100dp</item>
+    </style>
+
+    <style name="InputFieldTheme">
+        <item name="android:ems">5</item>
+        <item name="android:text">@string/default_value</item>
+        <item name="android:inputType">numberDecimal</item>
+    </style>
+</resources>

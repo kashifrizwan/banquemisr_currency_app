@@ -5,5 +5,5 @@ import com.andela.domain.model.ExchangeRatesDomainModel
 
 interface CurrencyRepository {
     suspend fun fetchCurrencies(): CurrenciesDomainModel
-    suspend fun fetchExchangeRates(base: String, symbol: String): ExchangeRatesDomainModel
+    suspend fun fetchExchangeRates(fromCurrency: String, toCurrency: String): ExchangeRatesDomainModel
 }
