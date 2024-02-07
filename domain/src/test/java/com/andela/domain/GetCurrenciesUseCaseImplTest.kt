@@ -6,13 +6,7 @@ import com.andela.domain.model.CurrenciesDomainModel.Currencies
 import com.andela.domain.repository.CurrencyRepository
 import com.andela.domain.usecases.GetCurrenciesUseCaseImpl
 import junit.framework.Assert.assertEquals
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -22,7 +16,6 @@ import org.mockito.junit.MockitoJUnitRunner
 import org.mockito.kotlin.given
 
 @RunWith(MockitoJUnitRunner::class)
-@ExperimentalCoroutinesApi
 class GetCurrenciesUseCaseImplTest {
 
     @get:Rule
@@ -35,15 +28,9 @@ class GetCurrenciesUseCaseImplTest {
 
     @Before
     fun setup() {
-        Dispatchers.setMain(Dispatchers.Unconfined)
         classUnderTest = GetCurrenciesUseCaseImpl(
             currencyRepository = currencyRepository
         )
-    }
-
-    @After
-    fun tearDown() {
-        Dispatchers.resetMain()
     }
 
     @Test
@@ -57,7 +44,7 @@ class GetCurrenciesUseCaseImplTest {
                 Pair("AMD", "Armenian Dram")
             )
         )
-        runBlocking { given(currencyRepository.fetchCurrencies()).willReturn(expectedResult) }
+        given(currencyRepository.fetchCurrencies()).willReturn(expectedResult)
 
         // When
         val actualResult = classUnderTest.execute()
@@ -70,7 +57,7 @@ class GetCurrenciesUseCaseImplTest {
     fun `Given error execution of GetCurrenciesUseCase Then return the error`() = runTest {
         // Given
         val expectedResult = Error("Unexpected Error!")
-        runBlocking { given(currencyRepository.fetchCurrencies()).willReturn(expectedResult) }
+        given(currencyRepository.fetchCurrencies()).willReturn(expectedResult)
 
         // When
         val actualResult = classUnderTest.execute()

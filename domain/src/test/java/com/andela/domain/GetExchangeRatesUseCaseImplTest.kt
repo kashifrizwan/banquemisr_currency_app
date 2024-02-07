@@ -7,13 +7,7 @@ import com.andela.domain.model.ExchangeRatesRequestDomainModel
 import com.andela.domain.repository.CurrencyRepository
 import com.andela.domain.usecases.GetExchangeRatesUseCaseImpl
 import junit.framework.Assert.assertEquals
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.setMain
-import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -23,7 +17,6 @@ import org.mockito.junit.MockitoJUnitRunner
 import org.mockito.kotlin.given
 
 @RunWith(MockitoJUnitRunner::class)
-@ExperimentalCoroutinesApi
 class GetExchangeRatesUseCaseImplTest {
 
     @get:Rule
@@ -36,15 +29,9 @@ class GetExchangeRatesUseCaseImplTest {
 
     @Before
     fun setup() {
-        Dispatchers.setMain(Dispatchers.Unconfined)
         classUnderTest = GetExchangeRatesUseCaseImpl(
             currencyRepository = currencyRepository
         )
-    }
-
-    @After
-    fun tearDown() {
-        Dispatchers.resetMain()
     }
 
     @Test
@@ -58,7 +45,7 @@ class GetExchangeRatesUseCaseImplTest {
                 Pair("PKR", 122.6)
             )
         )
-        runBlocking { given(currencyRepository.fetchExchangeRates("AED", "PKR")).willReturn(expectedResult) }
+        given(currencyRepository.fetchExchangeRates("AED", "PKR")).willReturn(expectedResult)
 
         // When
         val actualResult = classUnderTest.execute(ExchangeRatesRequestDomainModel("AED", "PKR"))
@@ -71,7 +58,7 @@ class GetExchangeRatesUseCaseImplTest {
     fun `Given error execution of GetExchangeRatesUseCaseImpl Then return the error`() = runTest {
         // Given
         val expectedResult = Error("Unexpected Error!")
-        runBlocking { given(currencyRepository.fetchExchangeRates("AED", "PKR")).willReturn(expectedResult) }
+        given(currencyRepository.fetchExchangeRates("AED", "PKR")).willReturn(expectedResult)
 
         // When
         val actualResult = classUnderTest.execute(ExchangeRatesRequestDomainModel("AED", "PKR"))
