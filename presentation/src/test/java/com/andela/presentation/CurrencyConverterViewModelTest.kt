@@ -95,7 +95,7 @@ class CurrencyConverterViewModelTest {
             Pair("AED", 2.55),
             Pair("AFN", 2.55),
             Pair("AMD", 4.45),
-            Pair("PKR", 122.6),
+            Pair("PKR", 122.6)
         ))
         val givenExchangeRateRequestModel = ExchangeRatesRequestDomainModel(base = "AED", symbol = "PKR")
         runBlocking { given(getExchangeRatesUseCase.execute(givenExchangeRateRequestModel)).willReturn(givenExchangeRates) }
