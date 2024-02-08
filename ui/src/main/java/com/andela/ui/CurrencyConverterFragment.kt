@@ -6,7 +6,6 @@ import android.widget.AdapterView
 import android.widget.AdapterView.OnItemSelectedListener
 import android.widget.Button
 import android.widget.EditText
-import android.widget.ProgressBar
 import android.widget.Spinner
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
@@ -16,6 +15,7 @@ import com.andela.ui.adapter.CurrenciesSpinnerAdapter
 import com.andela.ui.utilities.CurrenciesTextWatcher
 import com.andela.ui.utilities.showAlertDialog
 import com.andela.ui.utilities.updateTextWatcher
+import com.google.android.material.progressindicator.CircularProgressIndicator
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -34,7 +34,7 @@ class CurrencyConverterFragment : BaseFragment<CurrencyConverterViewState>(
     private val baseCurrencyEdittext: EditText get() = requireView().findViewById(R.id.editText_base_currency)
     private val toCurrencyEditText: EditText get() = requireView().findViewById(R.id.editText_to_currency)
     private val swapButton: Button get() = requireView().findViewById(R.id.btn_swap)
-    private val progressBar: ProgressBar get() = requireView().findViewById(R.id.progress_bar)
+    private val progressBar: CircularProgressIndicator get() = requireView().findViewById(R.id.progress_bar)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
