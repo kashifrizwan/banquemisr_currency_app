@@ -75,12 +75,10 @@ class CurrencyConverterFragment : BaseFragment<CurrencyConverterViewState>(
     private val onCurrencySelectedListener: OnItemSelectedListener by lazy {
         object: OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                if (position != 0) {
-                    viewModel.onCurrencyChangedAction(
-                        fromCurrency = baseCurrencySpinner.selectedItem.toString(),
-                        toCurrency = toCurrencySpinner.selectedItem.toString()
-                    )
-                }
+                viewModel.onCurrencyChangedAction(
+                    fromCurrency = baseCurrencySpinner.selectedItem.toString(),
+                    toCurrency = toCurrencySpinner.selectedItem.toString()
+                )
             }
             override fun onNothingSelected(parent: AdapterView<*>?) {}
         }

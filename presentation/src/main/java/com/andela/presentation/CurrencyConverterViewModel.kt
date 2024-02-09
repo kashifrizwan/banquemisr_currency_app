@@ -44,6 +44,9 @@ class CurrencyConverterViewModel @Inject constructor(
     }
 
     fun onCurrencyChangedAction(fromCurrency: String, toCurrency: String) {
+        if (fromCurrency == toCurrency || fromCurrency.isEmpty() || toCurrency.isEmpty()) {
+            return
+        }
         if (getExchangeRatesJob?.isActive == true) { getExchangeRatesJob?.cancel() }
         getExchangeRatesJob = viewModelScope.launch {
             updateProgressBarVisibility(isVisible = true)
