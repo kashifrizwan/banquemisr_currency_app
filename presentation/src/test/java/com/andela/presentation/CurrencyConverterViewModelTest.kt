@@ -65,7 +65,7 @@ class CurrencyConverterViewModelTest {
         runBlocking { given(getCurrenciesUseCase.execute()).willReturn(givenCurrencies) }
 
         // When
-        classUnderTest.onFragmentCreated()
+        classUnderTest.onFragmentViewCreated()
         val actualResult = classUnderTest.currentViewState().availableCurrenciesList
 
         // Then
@@ -80,7 +80,7 @@ class CurrencyConverterViewModelTest {
         runBlocking { given(getCurrenciesUseCase.execute()).willReturn(givenError) }
 
         // When
-        classUnderTest.onFragmentCreated()
+        classUnderTest.onFragmentViewCreated()
         val actualResult = classUnderTest.dialogCommand.value
 
         // Then

@@ -24,7 +24,7 @@ class CurrencyConverterViewModel @Inject constructor(
     private var getCurrenciesJob: Job? = null
     private var getExchangeRatesJob: Job? = null
 
-    fun onFragmentCreated() {
+    fun onFragmentViewCreated() {
         if (getCurrenciesJob?.isActive == true) { getCurrenciesJob?.cancel() }
         getCurrenciesJob = viewModelScope.launch {
             updateProgressBarVisibility(isVisible = true)

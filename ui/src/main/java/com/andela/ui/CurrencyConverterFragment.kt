@@ -19,6 +19,8 @@ import com.google.android.material.progressindicator.CircularProgressIndicator
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
+private const val BASE_SPINNER_STATE = "BaseSpinnerState"
+private const val TO_SPINNER_STATE = "ToSpinnerState"
 
 @AndroidEntryPoint
 class CurrencyConverterFragment : BaseFragment<CurrencyConverterViewState>(
@@ -38,24 +40,42 @@ class CurrencyConverterFragment : BaseFragment<CurrencyConverterViewState>(
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewModel.onFragmentCreated()
+        if (savedInstanceState == null) { viewModel.onFragmentViewCreated() }
         baseCurrencySpinner.adapter = currenciesAdapter
         toCurrencySpinner.adapter = currenciesAdapter
-
         setupClickListeners()
         setupOnItemChangeListeners()
         setupFocusChangeListeners()
     }
 
+    override fun onViewStateRestored(savedInstanceState: Bundle?) {
+        super.onViewStateRestored(savedInstanceState)
+        savedInstanceState?.let { state ->
+            baseCurrencySpinner.setSelection(state.getInt(BASE_SPINNER_STATE, 0))
+            toCurrencySpinner.setSelection(state.getInt(TO_SPINNER_STATE, 0))
+        }
+    }
+
     override fun renderViewState(viewState: CurrencyConverterViewState) {
         progressBar.isVisible = viewState.isLoading
-        currenciesAdapter.addAll(viewState.availableCurrenciesList)
-        currenciesAdapter.notifyDataSetChanged()
+        updateCurrenciesList(viewState.availableCurrenciesList)
         onCurrencyValueChanged(baseCurrencyEdittext.text.toString(), toCurrencyEditText, isBaseAmount = true)
+    }
+
+    private fun updateCurrenciesList(currencies: List<String>) {
+        currenciesAdapter.clear()
+        currenciesAdapter.addAll(currencies)
+        currenciesAdapter.notifyDataSetChanged()
     }
 
     override fun notifyDialogCommand(message: String) {
         showAlertDialog(message = message)
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putInt(BASE_SPINNER_STATE, baseCurrencySpinner.selectedItemPosition)
+        outState.putInt(TO_SPINNER_STATE, toCurrencySpinner.selectedItemPosition)
     }
 
     private fun setupClickListeners() {
