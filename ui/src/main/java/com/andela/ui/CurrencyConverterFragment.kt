@@ -1,21 +1,21 @@
 package com.andela.ui
 
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.AdapterView.OnItemSelectedListener
-import android.widget.Button
 import android.widget.EditText
-import android.widget.Spinner
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import com.andela.presentation.CurrencyConverterViewModel
 import com.andela.presentation.CurrencyConverterViewState
 import com.andela.ui.adapter.CurrenciesSpinnerAdapter
+import com.andela.ui.databinding.FragmentCurrencyConverterBinding
 import com.andela.ui.utilities.CurrenciesTextWatcher
 import com.andela.ui.utilities.showAlertDialog
 import com.andela.ui.utilities.updateTextWatcher
-import com.google.android.material.progressindicator.CircularProgressIndicator
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -23,26 +23,27 @@ private const val BASE_SPINNER_STATE = "BaseSpinnerState"
 private const val TO_SPINNER_STATE = "ToSpinnerState"
 
 @AndroidEntryPoint
-class CurrencyConverterFragment : BaseFragment<CurrencyConverterViewState>(
-    R.layout.fragment_currency_converter
-) {
+class CurrencyConverterFragment : BaseFragment<CurrencyConverterViewState>() {
+
     override val viewModel: CurrencyConverterViewModel by viewModels()
 
     @Inject
     lateinit var currenciesAdapter: CurrenciesSpinnerAdapter
 
-    private val baseCurrencySpinner: Spinner get() = requireView().findViewById(R.id.spinner_base_currency)
-    private val toCurrencySpinner: Spinner get() = requireView().findViewById(R.id.spinner_to_currency)
-    private val baseCurrencyEdittext: EditText get() = requireView().findViewById(R.id.editText_base_currency)
-    private val toCurrencyEditText: EditText get() = requireView().findViewById(R.id.editText_to_currency)
-    private val swapButton: Button get() = requireView().findViewById(R.id.btn_swap)
-    private val progressBar: CircularProgressIndicator get() = requireView().findViewById(R.id.progress_bar)
+    private var _dataBinding: FragmentCurrencyConverterBinding? = null
+
+    private val dataBinding get() = _dataBinding!!
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+        _dataBinding = FragmentCurrencyConverterBinding.inflate(inflater, container, false)
+        return dataBinding.root
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         if (savedInstanceState == null) { viewModel.onFragmentViewCreated() }
-        baseCurrencySpinner.adapter = currenciesAdapter
-        toCurrencySpinner.adapter = currenciesAdapter
+        dataBinding.spinnerBaseCurrency.adapter = currenciesAdapter
+        dataBinding.spinnerToCurrency.adapter = currenciesAdapter
         setupClickListeners()
         setupOnItemChangeListeners()
         setupFocusChangeListeners()
@@ -51,15 +52,19 @@ class CurrencyConverterFragment : BaseFragment<CurrencyConverterViewState>(
     override fun onViewStateRestored(savedInstanceState: Bundle?) {
         super.onViewStateRestored(savedInstanceState)
         savedInstanceState?.let { state ->
-            baseCurrencySpinner.setSelection(state.getInt(BASE_SPINNER_STATE, 0))
-            toCurrencySpinner.setSelection(state.getInt(TO_SPINNER_STATE, 0))
+            dataBinding.spinnerBaseCurrency.setSelection(state.getInt(BASE_SPINNER_STATE, 0))
+            dataBinding.spinnerToCurrency.setSelection(state.getInt(TO_SPINNER_STATE, 0))
         }
     }
 
     override fun renderViewState(viewState: CurrencyConverterViewState) {
-        progressBar.isVisible = viewState.isLoading
+        dataBinding.progressBar.isVisible = viewState.isLoading
         updateCurrenciesList(viewState.availableCurrenciesList)
-        onCurrencyValueChanged(baseCurrencyEdittext.text.toString(), toCurrencyEditText, isBaseAmount = true)
+        onCurrencyValueChanged(
+            dataBinding.editTextBaseCurrency.text.toString(),
+            dataBinding.editTextToCurrency,
+            isBaseAmount = true
+        )
     }
 
     private fun updateCurrenciesList(currencies: List<String>) {
@@ -74,30 +79,30 @@ class CurrencyConverterFragment : BaseFragment<CurrencyConverterViewState>(
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putInt(BASE_SPINNER_STATE, baseCurrencySpinner.selectedItemPosition)
-        outState.putInt(TO_SPINNER_STATE, toCurrencySpinner.selectedItemPosition)
+        outState.putInt(BASE_SPINNER_STATE, dataBinding.spinnerBaseCurrency.selectedItemPosition)
+        outState.putInt(TO_SPINNER_STATE, dataBinding.spinnerToCurrency.selectedItemPosition)
     }
 
     private fun setupClickListeners() {
-        swapButton.setOnClickListener {
-            val baseSpinnerSelectedPosition = baseCurrencySpinner.selectedItemPosition
-            baseCurrencySpinner.setSelection(toCurrencySpinner.selectedItemPosition)
-            toCurrencySpinner.setSelection(baseSpinnerSelectedPosition)
+        dataBinding.btnSwap.setOnClickListener {
+            val baseSpinnerSelectedPosition = dataBinding.spinnerBaseCurrency.selectedItemPosition
+            dataBinding.spinnerBaseCurrency.setSelection(dataBinding.spinnerToCurrency.selectedItemPosition)
+            dataBinding.spinnerToCurrency.setSelection(baseSpinnerSelectedPosition)
             viewModel.onCurrenciesSwappedAction()
         }
     }
 
     private fun setupOnItemChangeListeners() {
-        baseCurrencySpinner.onItemSelectedListener = onCurrencySelectedListener
-        toCurrencySpinner.onItemSelectedListener = onCurrencySelectedListener
+        dataBinding.spinnerBaseCurrency.onItemSelectedListener = onCurrencySelectedListener
+        dataBinding.spinnerToCurrency.onItemSelectedListener = onCurrencySelectedListener
     }
 
     private val onCurrencySelectedListener: OnItemSelectedListener by lazy {
         object: OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 viewModel.onCurrencyChangedAction(
-                    fromCurrency = baseCurrencySpinner.selectedItem.toString(),
-                    toCurrency = toCurrencySpinner.selectedItem.toString()
+                    fromCurrency = dataBinding.spinnerBaseCurrency.selectedItem.toString(),
+                    toCurrency = dataBinding.spinnerToCurrency.selectedItem.toString()
                 )
             }
             override fun onNothingSelected(parent: AdapterView<*>?) {}
@@ -105,20 +110,20 @@ class CurrencyConverterFragment : BaseFragment<CurrencyConverterViewState>(
     }
 
     private fun setupFocusChangeListeners() {
-        baseCurrencyEdittext.onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus ->
-            baseCurrencyEdittext.updateTextWatcher(
+        dataBinding.editTextBaseCurrency.onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus ->
+            dataBinding.editTextBaseCurrency.updateTextWatcher(
                 isActive = hasFocus,
                 textWatcher= baseCurrencyTextChangeListener,
-                adjacentInputView = toCurrencyEditText,
+                adjacentInputView = dataBinding.editTextToCurrency,
                 adjacentTextWatcher = toCurrencyTextChangeListener
             )
         }
 
-        toCurrencyEditText.onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus ->
-            toCurrencyEditText.updateTextWatcher(
+        dataBinding.editTextToCurrency.onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus ->
+            dataBinding.editTextToCurrency.updateTextWatcher(
                 isActive = hasFocus,
                 textWatcher= toCurrencyTextChangeListener,
-                adjacentInputView = baseCurrencyEdittext,
+                adjacentInputView = dataBinding.editTextBaseCurrency,
                 adjacentTextWatcher = baseCurrencyTextChangeListener
             )
         }
@@ -133,10 +138,10 @@ class CurrencyConverterFragment : BaseFragment<CurrencyConverterViewState>(
     }
 
     private val baseCurrencyTextChangeListener: CurrenciesTextWatcher by lazy {
-        CurrenciesTextWatcher(::onCurrencyValueChanged, toCurrencyEditText, isBaseAmount = true)
+        CurrenciesTextWatcher(::onCurrencyValueChanged, dataBinding.editTextToCurrency, isBaseAmount = true)
     }
 
     private val toCurrencyTextChangeListener: CurrenciesTextWatcher by lazy {
-        CurrenciesTextWatcher(::onCurrencyValueChanged, baseCurrencyEdittext, isBaseAmount = false)
+        CurrenciesTextWatcher(::onCurrencyValueChanged, dataBinding.editTextBaseCurrency, isBaseAmount = false)
     }
 }

@@ -2,13 +2,10 @@ package com.andela.ui
 
 import android.os.Bundle
 import android.view.View
-import androidx.annotation.LayoutRes
 import androidx.fragment.app.Fragment
 import com.andela.presentation.BaseViewModel
 
-abstract class BaseFragment<V>(
-    @LayoutRes val layoutId: Int
-) : Fragment(layoutId) {
+abstract class BaseFragment<V> : Fragment() {
 
     abstract val viewModel: BaseViewModel<V>
 
