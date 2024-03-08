@@ -4,20 +4,15 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.AdapterView
-import android.widget.AdapterView.OnItemSelectedListener
 import android.widget.EditText
-import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import com.andela.presentation.CurrencyConverterViewModel
 import com.andela.presentation.CurrencyConverterViewState
-import com.andela.ui.adapter.CurrenciesSpinnerAdapter
 import com.andela.ui.databinding.FragmentCurrencyConverterBinding
 import com.andela.ui.utilities.CurrenciesTextWatcher
 import com.andela.ui.utilities.showAlertDialog
 import com.andela.ui.utilities.updateTextWatcher
 import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
 
 private const val BASE_SPINNER_STATE = "BaseSpinnerState"
 private const val TO_SPINNER_STATE = "ToSpinnerState"
@@ -27,50 +22,36 @@ class CurrencyConverterFragment : BaseFragment<CurrencyConverterViewState>() {
 
     override val viewModel: CurrencyConverterViewModel by viewModels()
 
-    @Inject
-    lateinit var currenciesAdapter: CurrenciesSpinnerAdapter
-
     private var _dataBinding: FragmentCurrencyConverterBinding? = null
 
     private val dataBinding get() = _dataBinding!!
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _dataBinding = FragmentCurrencyConverterBinding.inflate(inflater, container, false)
+        dataBinding.lifecycleOwner = this
+        dataBinding.viewModel = viewModel
+        dataBinding.spinnerBaseCurrency.getSelectedItemPosition()
         return dataBinding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         if (savedInstanceState == null) { viewModel.onFragmentViewCreated() }
-        dataBinding.spinnerBaseCurrency.adapter = currenciesAdapter
-        dataBinding.spinnerToCurrency.adapter = currenciesAdapter
         setupClickListeners()
-        setupOnItemChangeListeners()
         setupFocusChangeListeners()
     }
 
     override fun onViewStateRestored(savedInstanceState: Bundle?) {
         super.onViewStateRestored(savedInstanceState)
-        savedInstanceState?.let { state ->
-            dataBinding.spinnerBaseCurrency.setSelection(state.getInt(BASE_SPINNER_STATE, 0))
-            dataBinding.spinnerToCurrency.setSelection(state.getInt(TO_SPINNER_STATE, 0))
-        }
+        savedInstanceState?.let { savedState -> dataBinding.savedState = savedState }
     }
 
     override fun renderViewState(viewState: CurrencyConverterViewState) {
-        dataBinding.progressBar.isVisible = viewState.isLoading
-        updateCurrenciesList(viewState.availableCurrenciesList)
         onCurrencyValueChanged(
             dataBinding.editTextBaseCurrency.text.toString(),
             dataBinding.editTextToCurrency,
             isBaseAmount = true
         )
-    }
-
-    private fun updateCurrenciesList(currencies: List<String>) {
-        currenciesAdapter.clear()
-        currenciesAdapter.addAll(currencies)
-        currenciesAdapter.notifyDataSetChanged()
     }
 
     override fun notifyDialogCommand(message: String) {
@@ -89,23 +70,6 @@ class CurrencyConverterFragment : BaseFragment<CurrencyConverterViewState>() {
             dataBinding.spinnerBaseCurrency.setSelection(dataBinding.spinnerToCurrency.selectedItemPosition)
             dataBinding.spinnerToCurrency.setSelection(baseSpinnerSelectedPosition)
             viewModel.onCurrenciesSwappedAction()
-        }
-    }
-
-    private fun setupOnItemChangeListeners() {
-        dataBinding.spinnerBaseCurrency.onItemSelectedListener = onCurrencySelectedListener
-        dataBinding.spinnerToCurrency.onItemSelectedListener = onCurrencySelectedListener
-    }
-
-    private val onCurrencySelectedListener: OnItemSelectedListener by lazy {
-        object: OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                viewModel.onCurrencyChangedAction(
-                    fromCurrency = dataBinding.spinnerBaseCurrency.selectedItem.toString(),
-                    toCurrency = dataBinding.spinnerToCurrency.selectedItem.toString()
-                )
-            }
-            override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
     }
 

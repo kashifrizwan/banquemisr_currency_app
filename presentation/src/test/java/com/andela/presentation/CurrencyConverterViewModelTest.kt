@@ -66,7 +66,7 @@ class CurrencyConverterViewModelTest {
 
         // When
         classUnderTest.onFragmentViewCreated()
-        val actualResult = classUnderTest.currentViewState().availableCurrenciesList
+        val actualResult = classUnderTest.currentViewState().currenciesList
 
         // Then
         assertEquals(expectedResult, actualResult)
@@ -98,10 +98,11 @@ class CurrencyConverterViewModelTest {
             Pair("PKR", 122.6)
         ))
         val givenExchangeRateRequestModel = ExchangeRatesRequestDomainModel(base = "AED", symbol = "PKR")
+        classUnderTest.viewState.postValue(CurrencyConverterViewState(currenciesList = listOf("AED", "AFN", "AMD", "PKR")))
         runBlocking { given(getExchangeRatesUseCase.execute(givenExchangeRateRequestModel)).willReturn(givenExchangeRates) }
 
         // When
-        classUnderTest.onCurrencyChangedAction(fromCurrency = "AED", toCurrency = "PKR")
+        classUnderTest.onCurrencyChangedAction(fromCurrency = 0, toCurrency = 3)
         val actualResult = classUnderTest.currentViewState().exchangeRateForSelectedCurrencies
 
         // Then
@@ -114,10 +115,11 @@ class CurrencyConverterViewModelTest {
         val expectedResult = "Unable to retrieve exchange rates!"
         val givenExchangeRates = ExchangeRatesDomainModel.Error(message = "Unable to retrieve exchange rates!")
         val givenExchangeRateRequestModel = ExchangeRatesRequestDomainModel(base = "AED", symbol = "PKR")
+        classUnderTest.viewState.postValue(CurrencyConverterViewState(currenciesList = listOf("AED", "AFN", "AMD", "PKR")))
         runBlocking { given(getExchangeRatesUseCase.execute(givenExchangeRateRequestModel)).willReturn(givenExchangeRates) }
 
         // When
-        classUnderTest.onCurrencyChangedAction(fromCurrency = "AED", toCurrency = "PKR")
+        classUnderTest.onCurrencyChangedAction(fromCurrency = 0, toCurrency = 3)
         val actualResult = classUnderTest.dialogCommand.value
 
         // Then

@@ -32,7 +32,7 @@ class CurrencyConverterViewModel @Inject constructor(
                 is Currencies -> updateViewState(
                     currentViewState().copy(
                         isLoading = false,
-                        availableCurrenciesList = result.currencies.keys.toList().sorted()
+                        currenciesList = result.currencies.keys.toList().sorted()
                     )
                 )
                 is CurrenciesDomainModel.Error -> {
@@ -43,22 +43,23 @@ class CurrencyConverterViewModel @Inject constructor(
         }
     }
 
-    fun onCurrencyChangedAction(fromCurrency: String, toCurrency: String) {
-        if (fromCurrency == toCurrency || fromCurrency.isEmpty() || toCurrency.isEmpty()) {
-            return
-        }
+    fun onCurrencyChangedAction(fromCurrency: Int = 0, toCurrency: Int = 0) {
+        if (fromCurrency == toCurrency) return
         if (getExchangeRatesJob?.isActive == true) { getExchangeRatesJob?.cancel() }
         getExchangeRatesJob = viewModelScope.launch {
             updateProgressBarVisibility(isVisible = true)
             when (
                 val response = getExchangeRatesUseCase.execute(
-                    request = ExchangeRatesRequestDomainModel(fromCurrency, toCurrency)
+                    request = ExchangeRatesRequestDomainModel(
+                        currentViewState().currenciesList[fromCurrency],
+                        currentViewState().currenciesList[toCurrency]
+                    )
                 )
             ) {
                 is ExchangeRatesSuccess -> updateViewState(
                     currentViewState().copy(
                         isLoading = false,
-                        exchangeRateForSelectedCurrencies = response.rates[toCurrency] ?: 1.0
+                        exchangeRateForSelectedCurrencies = response.rates[currentViewState().currenciesList[toCurrency]] ?: 1.0
                     )
                 )
                 is ExchangeRatesDomainModel.Error -> {
