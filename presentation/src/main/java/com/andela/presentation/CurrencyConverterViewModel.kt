@@ -70,14 +70,11 @@ class CurrencyConverterViewModel @Inject constructor(
         }
     }
 
-    fun onInputAmountChangedAction(inputAmount: Double, isReverse: Boolean): Double {
-        val calculatedRate = if (isReverse) {
-            inputAmount / (currentViewState().exchangeRateForSelectedCurrencies)
-        } else {
-            inputAmount * (currentViewState().exchangeRateForSelectedCurrencies)
-        }
-        return String.format("%.3f", calculatedRate).toDouble()
-    }
+    fun onBaseAmountChangedAction(baseAmount: String) =
+        String.format("%.1f", (baseAmount.toDoubleOrNull() ?: 1.0) * currentViewState().exchangeRateForSelectedCurrencies)
+
+    fun onTargetAmountChangedAction(targetAmount: String) =
+        String.format("%.1f", (targetAmount.toDoubleOrNull() ?: 1.0) / currentViewState().exchangeRateForSelectedCurrencies)
 
     fun onCurrenciesSwappedAction() {
         updateViewState(

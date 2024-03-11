@@ -38,6 +38,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
+            android:afterTextChanged="@{(amount) -> editTextToCurrency.hasFocus() ? void : editTextToCurrency.setText(viewModel.onBaseAmountChangedAction(amount.toString()))}"
             app:layout_constraintLeft_toLeftOf="@id/spinner_base_currency"
             app:layout_constraintRight_toRightOf="@id/spinner_base_currency"
             app:layout_constraintTop_toBottomOf="@id/spinner_base_currency" />
@@ -71,6 +72,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
+            android:afterTextChanged="@{(amount) -> editTextBaseCurrency.hasFocus() ? void : editTextBaseCurrency.setText(viewModel.onTargetAmountChangedAction(amount.toString()))}"
             app:layout_constraintLeft_toLeftOf="@id/spinner_to_currency"
             app:layout_constraintRight_toRightOf="@id/spinner_to_currency"
             app:layout_constraintTop_toBottomOf="@id/spinner_to_currency" />

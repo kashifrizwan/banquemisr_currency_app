@@ -9,14 +9,14 @@ abstract class BaseFragment<V> : Fragment() {
 
     abstract val viewModel: BaseViewModel<V>
 
-    protected abstract fun renderViewState(viewState: V)
+    protected abstract fun updateViewState(viewState: V)
     protected abstract fun notifyDialogCommand(message: String)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         viewModel.viewState.observe(viewLifecycleOwner) { viewState ->
-            renderViewState(viewState)
+            updateViewState(viewState)
         }
 
         viewModel.dialogCommand.observe(viewLifecycleOwner) { message ->

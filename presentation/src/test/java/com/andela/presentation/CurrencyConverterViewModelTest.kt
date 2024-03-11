@@ -127,26 +127,26 @@ class CurrencyConverterViewModelTest {
     }
 
     @Test
-    fun `Given successful execution of onInputAmountChangedAction When is not reverse Then return formatted amount`() {
+    fun `Given successful execution of onBaseAmountChangedAction Then return formatted calculated amount`() {
         // Given
-        val expectedResult = 310.8
+        val expectedResult = "310.8"
         classUnderTest.viewState.postValue(CurrencyConverterViewState(exchangeRateForSelectedCurrencies = 55.5))
 
         // When
-        val actualResult = classUnderTest.onInputAmountChangedAction(inputAmount = 5.6, isReverse = false)
+        val actualResult = classUnderTest.onBaseAmountChangedAction(baseAmount = "5.6")
 
         // Then
         assertEquals(expectedResult, actualResult)
     }
 
     @Test
-    fun `Given successful execution of onInputAmountChangedAction When is reverse Then return formatted amount`() {
+    fun `Given successful execution of onTargetAmountChangedAction Then return formatted calculated amount`() {
         // Given
-        val expectedResult = 0.101
+        val expectedResult = "0.1"
         classUnderTest.viewState.postValue(CurrencyConverterViewState(exchangeRateForSelectedCurrencies = 55.5))
 
         // When
-        val actualResult = classUnderTest.onInputAmountChangedAction(inputAmount = 5.6, isReverse = true)
+        val actualResult = classUnderTest.onTargetAmountChangedAction(targetAmount = "5.6")
 
         // Then
         assertEquals(expectedResult, actualResult)

@@ -1,7 +1,6 @@
 package com.andela.ui.utilities
 
-import android.text.TextWatcher
-import android.widget.EditText
+import android.widget.Spinner
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 
@@ -16,17 +15,8 @@ fun Fragment.showAlertDialog(
     builder.show()
 }
 
-fun EditText.updateTextWatcher(
-    isActive: Boolean,
-    textWatcher: TextWatcher,
-    adjacentInputView: EditText,
-    adjacentTextWatcher: TextWatcher
-) {
-    if (isActive) {
-        this.addTextChangedListener(textWatcher)
-        adjacentInputView.removeTextChangedListener(adjacentTextWatcher)
-    } else {
-        this.removeTextChangedListener(textWatcher)
-        adjacentInputView.addTextChangedListener(adjacentTextWatcher)
-    }
+fun Spinner.swapSelectionWith(spinner: Spinner) {
+    val baseSelection = this.selectedItemPosition
+    this.setSelection(spinner.selectedItemPosition)
+    spinner.setSelection(baseSelection)
 }
