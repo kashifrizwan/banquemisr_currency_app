@@ -66,7 +66,7 @@ class CurrencyConverterViewModelTest {
 
         // When
         classUnderTest.onFragmentViewCreated()
-        val actualResult = classUnderTest.currentViewState().availableCurrenciesList
+        val actualResult = classUnderTest.currentViewState().currenciesList
 
         // Then
         assertEquals(expectedResult, actualResult)
@@ -98,10 +98,11 @@ class CurrencyConverterViewModelTest {
             Pair("PKR", 122.6)
         ))
         val givenExchangeRateRequestModel = ExchangeRatesRequestDomainModel(base = "AED", symbol = "PKR")
+        classUnderTest.viewState.postValue(CurrencyConverterViewState(currenciesList = listOf("AED", "AFN", "AMD", "PKR")))
         runBlocking { given(getExchangeRatesUseCase.execute(givenExchangeRateRequestModel)).willReturn(givenExchangeRates) }
 
         // When
-        classUnderTest.onCurrencyChangedAction(fromCurrency = "AED", toCurrency = "PKR")
+        classUnderTest.onCurrencyChangedAction(fromCurrency = 0, toCurrency = 3)
         val actualResult = classUnderTest.currentViewState().exchangeRateForSelectedCurrencies
 
         // Then
@@ -114,10 +115,11 @@ class CurrencyConverterViewModelTest {
         val expectedResult = "Unable to retrieve exchange rates!"
         val givenExchangeRates = ExchangeRatesDomainModel.Error(message = "Unable to retrieve exchange rates!")
         val givenExchangeRateRequestModel = ExchangeRatesRequestDomainModel(base = "AED", symbol = "PKR")
+        classUnderTest.viewState.postValue(CurrencyConverterViewState(currenciesList = listOf("AED", "AFN", "AMD", "PKR")))
         runBlocking { given(getExchangeRatesUseCase.execute(givenExchangeRateRequestModel)).willReturn(givenExchangeRates) }
 
         // When
-        classUnderTest.onCurrencyChangedAction(fromCurrency = "AED", toCurrency = "PKR")
+        classUnderTest.onCurrencyChangedAction(fromCurrency = 0, toCurrency = 3)
         val actualResult = classUnderTest.dialogCommand.value
 
         // Then
@@ -125,26 +127,26 @@ class CurrencyConverterViewModelTest {
     }
 
     @Test
-    fun `Given successful execution of onInputAmountChangedAction When is not reverse Then return formatted amount`() {
+    fun `Given successful execution of onBaseAmountChangedAction Then return formatted calculated amount`() {
         // Given
-        val expectedResult = 310.8
+        val expectedResult = "310.8"
         classUnderTest.viewState.postValue(CurrencyConverterViewState(exchangeRateForSelectedCurrencies = 55.5))
 
         // When
-        val actualResult = classUnderTest.onInputAmountChangedAction(inputAmount = 5.6, isReverse = false)
+        val actualResult = classUnderTest.onBaseAmountChangedAction(baseAmount = "5.6")
 
         // Then
         assertEquals(expectedResult, actualResult)
     }
 
     @Test
-    fun `Given successful execution of onInputAmountChangedAction When is reverse Then return formatted amount`() {
+    fun `Given successful execution of onTargetAmountChangedAction Then return formatted calculated amount`() {
         // Given
-        val expectedResult = 0.101
+        val expectedResult = "0.1"
         classUnderTest.viewState.postValue(CurrencyConverterViewState(exchangeRateForSelectedCurrencies = 55.5))
 
         // When
-        val actualResult = classUnderTest.onInputAmountChangedAction(inputAmount = 5.6, isReverse = true)
+        val actualResult = classUnderTest.onTargetAmountChangedAction(targetAmount = "5.6")
 
         // Then
         assertEquals(expectedResult, actualResult)
