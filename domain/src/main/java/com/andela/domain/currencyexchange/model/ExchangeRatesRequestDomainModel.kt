@@ -1,4 +1,4 @@
-package com.andela.domain.model
+package com.andela.domain.currencyexchange.model
 
 data class ExchangeRatesRequestDomainModel(
     val base: String,
