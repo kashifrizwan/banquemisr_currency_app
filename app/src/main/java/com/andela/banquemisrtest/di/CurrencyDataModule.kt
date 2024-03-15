@@ -5,7 +5,9 @@ import com.andela.data.datasource.CurrencySource
 import com.andela.data.network.RetrofitBuilder
 import com.andela.data.repository.CurrencyDataRepository
 import com.andela.data.service.CurrencyService
-import com.andela.domain.repository.CurrencyRepository
+import com.andela.data.service.mapper.CurrenciesApiToDataModelMapper
+import com.andela.data.service.mapper.ExchangeRatesApiToDataModelMapper
+import com.andela.domain.currencyexchange.repository.CurrencyRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -25,11 +27,23 @@ object CurrencyDataModule {
 
     @Provides
     fun providesCurrencySource(
-        currencyService: CurrencyService
-    ): CurrencySource = CurrencyDataSource(currencyService)
+        currencyService: CurrencyService,
+        currenciesApiToDataModelMapper: CurrenciesApiToDataModelMapper,
+        exchangeRatesApiToDataModelMapper: ExchangeRatesApiToDataModelMapper
+    ): CurrencySource = CurrencyDataSource(
+        currencyService,
+        currenciesApiToDataModelMapper,
+        exchangeRatesApiToDataModelMapper
+    )
 
     @Provides
     fun providesCurrencyRepository(
         currencySource: CurrencySource
     ): CurrencyRepository = CurrencyDataRepository(currencySource)
+
+    @Provides
+    fun providesCurrenciesApiToDataModelMapper() = CurrenciesApiToDataModelMapper()
+
+    @Provides
+    fun providesExchangeRatesApiToDataModelMapper() = ExchangeRatesApiToDataModelMapper()
 }

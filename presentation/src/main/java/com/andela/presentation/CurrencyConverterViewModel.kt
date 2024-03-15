@@ -1,23 +1,22 @@
 package com.andela.presentation
 
-import androidx.lifecycle.viewModelScope
-import com.andela.domain.model.CurrenciesDomainModel
-import com.andela.domain.model.CurrenciesDomainModel.Currencies
-import com.andela.domain.model.ExchangeRatesDomainModel
-import com.andela.domain.model.ExchangeRatesDomainModel.ExchangeRatesSuccess
-import com.andela.domain.model.ExchangeRatesRequestDomainModel
-import com.andela.domain.usecases.GetCurrenciesUseCase
-import com.andela.domain.usecases.GetExchangeRatesUseCase
+import com.andela.domain.abstraction.usecase.UseCaseExecutorProvider
+import com.andela.domain.currencyexchange.model.ExchangeRatesRequestDomainModel
+import com.andela.domain.currencyexchange.usecases.GetCurrenciesUseCase
+import com.andela.domain.currencyexchange.usecases.GetExchangeRatesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class CurrencyConverterViewModel @Inject constructor(
     private val getCurrenciesUseCase: GetCurrenciesUseCase,
-    private val getExchangeRatesUseCase: GetExchangeRatesUseCase
-) : BaseViewModel<CurrencyConverterViewState>() {
+    private val getExchangeRatesUseCase: GetExchangeRatesUseCase,
+    useCaseExecutorProvider: UseCaseExecutorProvider
+) : BaseViewModel<CurrencyConverterViewState>(useCaseExecutorProvider) {
+
+    //Todo: Handle cancellation part in UseCaseExecutor
+    //Todo: Fix Unit Tests for ViewModel, UseCases and Repository
 
     override fun initialState() = CurrencyConverterViewState()
 
@@ -25,49 +24,44 @@ class CurrencyConverterViewModel @Inject constructor(
     private var getExchangeRatesJob: Job? = null
 
     fun onFragmentViewCreated() {
+        updateProgressBarVisibility(isVisible = true)
         if (getCurrenciesJob?.isActive == true) { getCurrenciesJob?.cancel() }
-        getCurrenciesJob = viewModelScope.launch {
-            updateProgressBarVisibility(isVisible = true)
-            when (val result = getCurrenciesUseCase.execute()) {
-                is Currencies -> updateViewState(
-                    currentViewState().copy(
-                        isLoading = false,
-                        currenciesList = result.currencies.keys.toList().sorted()
-                    )
+        getCurrenciesJob = useCaseExecutor.execute(
+            useCase = getCurrenciesUseCase,
+            callback = { result -> updateViewState(
+                currentViewState().copy(
+                    isLoading = false,
+                    currenciesList = result.currencies.keys.toList().sorted()
                 )
-                is CurrenciesDomainModel.Error -> {
-                    updateProgressBarVisibility(isVisible = false)
-                    notifyDialogCommand(result.message)
-                }
+            )},
+            onError = { errorMessage ->
+                updateProgressBarVisibility(isVisible = false)
+                notifyDialogCommand(errorMessage)
             }
-        }
+        )
     }
 
     fun onCurrencyChangedAction(fromCurrency: Int = 0, toCurrency: Int = 0) {
         if (fromCurrency == toCurrency) return
+        updateProgressBarVisibility(isVisible = true)
         if (getExchangeRatesJob?.isActive == true) { getExchangeRatesJob?.cancel() }
-        getExchangeRatesJob = viewModelScope.launch {
-            updateProgressBarVisibility(isVisible = true)
-            when (
-                val response = getExchangeRatesUseCase.execute(
-                    request = ExchangeRatesRequestDomainModel(
-                        currentViewState().currenciesList[fromCurrency],
-                        currentViewState().currenciesList[toCurrency]
-                    )
+        getExchangeRatesJob = useCaseExecutor.execute(
+            useCase = getExchangeRatesUseCase,
+            request = ExchangeRatesRequestDomainModel(
+                currentViewState().currenciesList[fromCurrency],
+                currentViewState().currenciesList[toCurrency]
+            ),
+            callback = { exchangeRates -> updateViewState(
+                currentViewState().copy(
+                    isLoading = false,
+                    exchangeRateForSelectedCurrencies = exchangeRates.rates[currentViewState().currenciesList[toCurrency]] ?: 1.0
                 )
-            ) {
-                is ExchangeRatesSuccess -> updateViewState(
-                    currentViewState().copy(
-                        isLoading = false,
-                        exchangeRateForSelectedCurrencies = response.rates[currentViewState().currenciesList[toCurrency]] ?: 1.0
-                    )
-                )
-                is ExchangeRatesDomainModel.Error -> {
-                    updateProgressBarVisibility(isVisible = false)
-                    notifyDialogCommand(response.message)
-                }
+            )},
+            onError = { errorMessage ->
+                updateProgressBarVisibility(isVisible = false)
+                notifyDialogCommand(errorMessage)
             }
-        }
+        )
     }
 
     fun onBaseAmountChangedAction(baseAmount: String) =

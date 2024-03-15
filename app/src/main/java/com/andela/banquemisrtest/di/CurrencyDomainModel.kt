@@ -1,10 +1,12 @@
 package com.andela.banquemisrtest.di
 
-import com.andela.domain.repository.CurrencyRepository
-import com.andela.domain.usecases.GetCurrenciesUseCase
-import com.andela.domain.usecases.GetCurrenciesUseCaseImpl
-import com.andela.domain.usecases.GetExchangeRatesUseCase
-import com.andela.domain.usecases.GetExchangeRatesUseCaseImpl
+import com.andela.domain.abstraction.usecase.UseCaseExecutor
+import com.andela.domain.abstraction.usecase.UseCaseExecutorProvider
+import com.andela.domain.currencyexchange.repository.CurrencyRepository
+import com.andela.domain.currencyexchange.usecases.GetCurrenciesUseCase
+import com.andela.domain.currencyexchange.usecases.GetCurrenciesUseCaseImpl
+import com.andela.domain.currencyexchange.usecases.GetExchangeRatesUseCase
+import com.andela.domain.currencyexchange.usecases.GetExchangeRatesUseCaseImpl
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -27,4 +29,8 @@ object CurrencyDomainModel {
     ): GetExchangeRatesUseCase = GetExchangeRatesUseCaseImpl(
         currencyRepository
     )
+
+    @Provides
+    fun providesUseCaseExecutorProvider(): UseCaseExecutorProvider =
+        { coroutineScope -> UseCaseExecutor(coroutineScope) }
 }
