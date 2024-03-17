@@ -6,14 +6,12 @@ import androidx.lifecycle.viewModelScope
 import com.andela.domain.abstraction.usecase.UseCaseExecutor
 import com.andela.domain.abstraction.usecase.UseCaseExecutorProvider
 
-abstract class BaseViewModel<V>(
-    useCaseExecutorProvider: UseCaseExecutorProvider
-) : ViewModel() {
+abstract class BaseViewModel<V> : ViewModel() {
 
     val viewState: MutableLiveData<V> = MutableLiveData()
     val dialogCommand: MutableLiveData<String> = MutableLiveData()
 
-    protected val useCaseExecutor: UseCaseExecutor = useCaseExecutorProvider(viewModelScope)
+    protected val useCaseExecutor: UseCaseExecutor by lazy { UseCaseExecutor(viewModelScope) }
 
     abstract fun initialState(): V
 
