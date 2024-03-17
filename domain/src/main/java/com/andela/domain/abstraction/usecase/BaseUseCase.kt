@@ -12,5 +12,5 @@ abstract class BaseUseCase<INPUT_TYPE, OUTPUT_TYPE> {
         callback(result)
     }
 
-    protected abstract suspend fun executeUseCase(request: INPUT_TYPE): OUTPUT_TYPE
+    internal abstract suspend fun executeUseCase(request: INPUT_TYPE): OUTPUT_TYPE
 }

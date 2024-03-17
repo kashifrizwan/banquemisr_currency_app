@@ -1,17 +1,17 @@
 package com.andela.presentation
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import com.andela.domain.model.CurrenciesDomainModel.Currencies
-import com.andela.domain.model.CurrenciesDomainModel.Error
-import com.andela.domain.model.ExchangeRatesDomainModel
-import com.andela.domain.model.ExchangeRatesDomainModel.ExchangeRatesSuccess
-import com.andela.domain.model.ExchangeRatesRequestDomainModel
-import com.andela.domain.usecases.GetCurrenciesUseCase
-import com.andela.domain.usecases.GetExchangeRatesUseCase
+import com.andela.domain.abstraction.usecase.UseCaseExecutor
+import com.andela.domain.currencyexchange.model.CurrenciesDomainModel
+import com.andela.domain.currencyexchange.model.ExchangeRatesDomainModel
+import com.andela.domain.currencyexchange.model.ExchangeRatesRequestDomainModel
+import com.andela.domain.currencyexchange.usecases.GetCurrenciesUseCase
+import com.andela.domain.currencyexchange.usecases.GetExchangeRatesUseCase
+import com.andela.presentation.extensions.givenFailedUseCaseExecution
+import com.andela.presentation.extensions.givenSuccessfulUseCaseExecution
 import junit.framework.Assert.assertEquals
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -21,7 +21,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.junit.MockitoJUnitRunner
-import org.mockito.kotlin.given
 
 @RunWith(MockitoJUnitRunner::class)
 @ExperimentalCoroutinesApi
@@ -38,12 +37,16 @@ class CurrencyConverterViewModelTest {
     @Mock
     private lateinit var getExchangeRatesUseCase: GetExchangeRatesUseCase
 
+    @Mock
+    private lateinit var useCaseExecutor: UseCaseExecutor
+
     @Before
     fun setup() {
         Dispatchers.setMain(Dispatchers.Unconfined)
         classUnderTest = CurrencyConverterViewModel(
             getCurrenciesUseCase = getCurrenciesUseCase,
-            getExchangeRatesUseCase = getExchangeRatesUseCase
+            getExchangeRatesUseCase = getExchangeRatesUseCase,
+            useCaseExecutorProvider = { useCaseExecutor }
         )
     }
 
@@ -56,13 +59,16 @@ class CurrencyConverterViewModelTest {
     fun `Given successful execution of GetCurrenciesUseCase Then update the Currencies List in ViewState`() {
         // Given
         val expectedResult = listOf("AED", "AFN", "AMD", "PKR")
-        val givenCurrencies = Currencies(currencies = hashMapOf(
+        val givenCurrencies = CurrenciesDomainModel(currencies = hashMapOf(
             Pair("AED", "United Arab Emirates Dirham"),
             Pair("AFN", "Afghan Afghani"),
             Pair("PKR", "Pakistani Rupee"),
             Pair("AMD", "Armenian Dram")
         ))
-        runBlocking { given(getCurrenciesUseCase.execute()).willReturn(givenCurrencies) }
+        useCaseExecutor.givenSuccessfulUseCaseExecution(
+            useCase = getCurrenciesUseCase,
+            result = givenCurrencies
+        )
 
         // When
         classUnderTest.onFragmentViewCreated()
@@ -73,11 +79,13 @@ class CurrencyConverterViewModelTest {
     }
 
     @Test
-    fun `Given Error execution of GetCurrenciesUseCase Then update the DialogCommand`() {
+    fun `Given Failed execution of GetCurrenciesUseCase Then update the DialogCommand`() {
         // Given
         val expectedResult = "Unexpected network error!"
-        val givenError = Error(message = "Unexpected network error!")
-        runBlocking { given(getCurrenciesUseCase.execute()).willReturn(givenError) }
+        useCaseExecutor.givenFailedUseCaseExecution(
+            useCase = getCurrenciesUseCase,
+            error = "Unexpected network error!"
+        )
 
         // When
         classUnderTest.onFragmentViewCreated()
@@ -91,7 +99,7 @@ class CurrencyConverterViewModelTest {
     fun `Given successful execution of GetExchangeRatesUseCase Then update the Exchange Rate in ViewState`() {
         // Given
         val expectedResult = 122.6
-        val givenExchangeRates = ExchangeRatesSuccess(rates = hashMapOf(
+        val givenExchangeRates = ExchangeRatesDomainModel(rates = hashMapOf(
             Pair("AED", 2.55),
             Pair("AFN", 2.55),
             Pair("AMD", 4.45),
@@ -99,7 +107,11 @@ class CurrencyConverterViewModelTest {
         ))
         val givenExchangeRateRequestModel = ExchangeRatesRequestDomainModel(base = "AED", symbol = "PKR")
         classUnderTest.viewState.postValue(CurrencyConverterViewState(currenciesList = listOf("AED", "AFN", "AMD", "PKR")))
-        runBlocking { given(getExchangeRatesUseCase.execute(givenExchangeRateRequestModel)).willReturn(givenExchangeRates) }
+        useCaseExecutor.givenSuccessfulUseCaseExecution(
+            useCase = getExchangeRatesUseCase,
+            request = givenExchangeRateRequestModel,
+            result = givenExchangeRates
+        )
 
         // When
         classUnderTest.onCurrencyChangedAction(fromCurrency = 0, toCurrency = 3)
@@ -110,13 +122,16 @@ class CurrencyConverterViewModelTest {
     }
 
     @Test
-    fun `Given Error execution of GetExchangeRatesUseCase Then update the DialogCommand`() {
+    fun `Given Failed execution of GetExchangeRatesUseCase Then update the DialogCommand`() {
         // Given
         val expectedResult = "Unable to retrieve exchange rates!"
-        val givenExchangeRates = ExchangeRatesDomainModel.Error(message = "Unable to retrieve exchange rates!")
         val givenExchangeRateRequestModel = ExchangeRatesRequestDomainModel(base = "AED", symbol = "PKR")
         classUnderTest.viewState.postValue(CurrencyConverterViewState(currenciesList = listOf("AED", "AFN", "AMD", "PKR")))
-        runBlocking { given(getExchangeRatesUseCase.execute(givenExchangeRateRequestModel)).willReturn(givenExchangeRates) }
+        useCaseExecutor.givenFailedUseCaseExecution(
+            useCase = getExchangeRatesUseCase,
+            request = givenExchangeRateRequestModel,
+            error = "Unable to retrieve exchange rates!"
+        )
 
         // When
         classUnderTest.onCurrencyChangedAction(fromCurrency = 0, toCurrency = 3)
