@@ -3,11 +3,10 @@ package com.andela.data
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.andela.data.datasource.CurrencySource
 import com.andela.data.datasource.model.CurrenciesDataModel
-import com.andela.data.datasource.model.CurrenciesDataModel.Currencies
 import com.andela.data.datasource.model.ExchangeRatesDataModel
 import com.andela.data.repository.CurrencyDataRepository
-import com.andela.domain.model.CurrenciesDomainModel
-import com.andela.domain.model.ExchangeRatesDomainModel
+import com.andela.domain.currencyexchange.model.CurrenciesDomainModel
+import com.andela.domain.currencyexchange.model.ExchangeRatesDomainModel
 import junit.framework.Assert.assertEquals
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -53,23 +52,9 @@ class CurrencyDataRepositoryTest {
     @Test
     fun `Given successful execution of fetchCurrencies Then return the Currencies`() = runTest {
         // Given
-        val givenCurrencies = Currencies(currencies = givenCurrenciesMap)
-        val expectedResult = CurrenciesDomainModel.Currencies(currencies = givenCurrenciesMap)
+        val givenCurrencies = CurrenciesDataModel(currencies = givenCurrenciesMap)
+        val expectedResult = CurrenciesDomainModel(currencies = givenCurrenciesMap)
         given(dataSource.fetchCurrencies()).willReturn(givenCurrencies)
-
-        // When
-        val actualResult = classUnderTest.fetchCurrencies()
-
-        // Then
-        assertEquals(expectedResult, actualResult)
-    }
-
-    @Test
-    fun `Given api error in execution of fetchCurrencies Then return error`() = runTest {
-        // Given
-        val givenInput = CurrenciesDataModel.ApiError(message = "API key is not valid!")
-        val expectedResult = CurrenciesDomainModel.Error(message = "API key is not valid!")
-        given(dataSource.fetchCurrencies()).willReturn(givenInput)
 
         // When
         val actualResult = classUnderTest.fetchCurrencies()
@@ -81,22 +66,8 @@ class CurrencyDataRepositoryTest {
     @Test
     fun `Given successful execution of fetchExchangeRates Then return the Exchange rates`() = runTest {
         // Given
-        val givenInput = ExchangeRatesDataModel.ExchangeRates(rates = givenExchangeRatesMap)
-        val expectedResult = ExchangeRatesDomainModel.ExchangeRatesSuccess(rates = givenExchangeRatesMap)
-        given(dataSource.fetchExchangeRate("AED", "PKR")).willReturn(givenInput)
-
-        // When
-        val actualResult = classUnderTest.fetchExchangeRates("AED", "PKR")
-
-        // Then
-        assertEquals(expectedResult, actualResult)
-    }
-
-    @Test
-    fun `Given api error in execution of fetchExchangeRates Then return error`() = runTest {
-        // Given
-        val givenInput = ExchangeRatesDataModel.ApiError(message = "API key is not valid!")
-        val expectedResult = ExchangeRatesDomainModel.Error(message = "API key is not valid!")
+        val givenInput = ExchangeRatesDataModel(rates = givenExchangeRatesMap)
+        val expectedResult = ExchangeRatesDomainModel(rates = givenExchangeRatesMap)
         given(dataSource.fetchExchangeRate("AED", "PKR")).willReturn(givenInput)
 
         // When

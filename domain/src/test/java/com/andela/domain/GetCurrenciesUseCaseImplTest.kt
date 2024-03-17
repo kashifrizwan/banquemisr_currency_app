@@ -1,10 +1,10 @@
 package com.andela.domain
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import com.andela.domain.model.CurrenciesDomainModel.Error
-import com.andela.domain.model.CurrenciesDomainModel.Currencies
-import com.andela.domain.repository.CurrencyRepository
-import com.andela.domain.usecases.GetCurrenciesUseCaseImpl
+import com.andela.domain.abstraction.exception.UnknownNetworkException
+import com.andela.domain.currencyexchange.model.CurrenciesDomainModel
+import com.andela.domain.currencyexchange.repository.CurrencyRepository
+import com.andela.domain.currencyexchange.usecases.GetCurrenciesUseCaseImpl
 import junit.framework.Assert.assertEquals
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -14,6 +14,7 @@ import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.junit.MockitoJUnitRunner
 import org.mockito.kotlin.given
+import kotlin.test.assertFails
 
 @RunWith(MockitoJUnitRunner::class)
 class GetCurrenciesUseCaseImplTest {
@@ -36,7 +37,7 @@ class GetCurrenciesUseCaseImplTest {
     @Test
     fun `Given successful execution of GetCurrenciesUseCase Then return the Currencies`() = runTest {
         // Given
-        val expectedResult = Currencies(
+        val expectedResult = CurrenciesDomainModel(
             currencies = hashMapOf(
                 Pair("AED", "United Arab Emirates Dirham"),
                 Pair("AFN", "Afghan Afghani"),
@@ -47,22 +48,21 @@ class GetCurrenciesUseCaseImplTest {
         given(currencyRepository.fetchCurrencies()).willReturn(expectedResult)
 
         // When
-        val actualResult = classUnderTest.execute()
+        val actualResult = classUnderTest.executeUseCase(Unit)
 
         // Then
         assertEquals(expectedResult, actualResult)
     }
 
     @Test
-    fun `Given error execution of GetCurrenciesUseCase Then return the error`() = runTest {
+    fun `Given failed execution of GetCurrenciesUseCase Then return the UnknownNetworkException`() = runTest {
         // Given
-        val expectedResult = Error("Unexpected Error!")
-        given(currencyRepository.fetchCurrencies()).willReturn(expectedResult)
-
-        // When
-        val actualResult = classUnderTest.execute()
+        given(currencyRepository.fetchCurrencies()).willAnswer{ throw UnknownNetworkException() }
 
         // Then
-        assertEquals(expectedResult, actualResult)
+        assertFails {
+            // When
+            classUnderTest.executeUseCase(Unit)
+        }
     }
 }

@@ -1,11 +1,11 @@
 package com.andela.domain
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import com.andela.domain.model.ExchangeRatesDomainModel.Error
-import com.andela.domain.model.ExchangeRatesDomainModel.ExchangeRatesSuccess
-import com.andela.domain.model.ExchangeRatesRequestDomainModel
-import com.andela.domain.repository.CurrencyRepository
-import com.andela.domain.usecases.GetExchangeRatesUseCaseImpl
+import com.andela.domain.abstraction.exception.UnknownNetworkException
+import com.andela.domain.currencyexchange.model.ExchangeRatesDomainModel
+import com.andela.domain.currencyexchange.model.ExchangeRatesRequestDomainModel
+import com.andela.domain.currencyexchange.repository.CurrencyRepository
+import com.andela.domain.currencyexchange.usecases.GetExchangeRatesUseCaseImpl
 import junit.framework.Assert.assertEquals
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -15,6 +15,7 @@ import org.junit.runner.RunWith
 import org.mockito.Mock
 import org.mockito.junit.MockitoJUnitRunner
 import org.mockito.kotlin.given
+import kotlin.test.assertFails
 
 @RunWith(MockitoJUnitRunner::class)
 class GetExchangeRatesUseCaseImplTest {
@@ -37,7 +38,7 @@ class GetExchangeRatesUseCaseImplTest {
     @Test
     fun `Given successful execution of GetExchangeRatesUseCaseImpl Then return the Exchange Rates`() = runTest {
         // Given
-        val expectedResult = ExchangeRatesSuccess(
+        val expectedResult = ExchangeRatesDomainModel(
             rates = hashMapOf(
                 Pair("AED", 2.55),
                 Pair("AFN", 2.55),
@@ -48,22 +49,21 @@ class GetExchangeRatesUseCaseImplTest {
         given(currencyRepository.fetchExchangeRates("AED", "PKR")).willReturn(expectedResult)
 
         // When
-        val actualResult = classUnderTest.execute(ExchangeRatesRequestDomainModel("AED", "PKR"))
+        val actualResult = classUnderTest.executeUseCase(ExchangeRatesRequestDomainModel("AED", "PKR"))
 
         // Then
         assertEquals(expectedResult, actualResult)
     }
 
     @Test
-    fun `Given error execution of GetExchangeRatesUseCaseImpl Then return the error`() = runTest {
+    fun `Given failure execution of GetExchangeRatesUseCaseImpl Then return the UnknownNetworkException`() = runTest {
         // Given
-        val expectedResult = Error("Unexpected Error!")
-        given(currencyRepository.fetchExchangeRates("AED", "PKR")).willReturn(expectedResult)
-
-        // When
-        val actualResult = classUnderTest.execute(ExchangeRatesRequestDomainModel("AED", "PKR"))
+        given(currencyRepository.fetchExchangeRates("AED", "PKR")).willAnswer{ throw UnknownNetworkException() }
 
         // Then
-        assertEquals(expectedResult, actualResult)
+        assertFails {
+            // When
+            classUnderTest.executeUseCase(ExchangeRatesRequestDomainModel("AED", "PKR"))
+        }
     }
 }

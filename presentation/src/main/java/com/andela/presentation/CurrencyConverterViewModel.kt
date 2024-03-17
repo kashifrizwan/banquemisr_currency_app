@@ -15,9 +15,6 @@ class CurrencyConverterViewModel @Inject constructor(
     useCaseExecutorProvider: UseCaseExecutorProvider
 ) : BaseViewModel<CurrencyConverterViewState>(useCaseExecutorProvider) {
 
-    //Todo: Handle cancellation part in UseCaseExecutor
-    //Todo: Fix Unit Tests for ViewModel, UseCases and Repository
-
     override fun initialState() = CurrencyConverterViewState()
 
     private var getCurrenciesJob: Job? = null
