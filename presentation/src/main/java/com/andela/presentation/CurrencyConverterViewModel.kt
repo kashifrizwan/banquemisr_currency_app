@@ -1,6 +1,5 @@
 package com.andela.presentation
 
-import com.andela.domain.abstraction.usecase.UseCaseExecutorProvider
 import com.andela.domain.currencyexchange.model.ExchangeRatesRequestDomainModel
 import com.andela.domain.currencyexchange.usecases.GetCurrenciesUseCase
 import com.andela.domain.currencyexchange.usecases.GetExchangeRatesUseCase

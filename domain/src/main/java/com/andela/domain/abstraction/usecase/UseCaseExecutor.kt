@@ -1,6 +1,8 @@
 package com.andela.domain.abstraction.usecase
 
 import com.andela.domain.abstraction.exception.UnknownNetworkException
+import com.andela.domain.abstraction.exception.UseCaseCancellationException
+import com.andela.domain.utility.globalLogger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -32,14 +34,20 @@ class UseCaseExecutor(
         onError: (message: String) -> Unit = {}
     ) = coroutineScope.launch(job) {
         try {
+            globalLogger("$useCase execution started")
             useCase.run(request, callback)
-        } catch (cancellationException: CancellationException) {
-            //onError(cancellationException.message ?: "Unexpected Error occurred!")
-        } catch (unknownNetworkException: UnknownNetworkException) {
-            onError(unknownNetworkException.errorMessage)
+        } catch (exception: UseCaseCancellationException) {
+            globalLogger("$useCase execution cancelled with message: ${exception.errorMessage}")
+        } catch (exception: CancellationException) {
+            globalLogger("$useCase execution cancelled with message: ${exception.message}")
+        } catch (exception: UnknownNetworkException) {
+            globalLogger(exception.message)
+            onError(exception.errorMessage)
         } catch (throwable: Throwable) {
+            globalLogger(throwable.message)
             onError(throwable.message ?: "Unexpected Error occurred!")
         } catch (exception: Exception) {
+            globalLogger(exception.message)
             onError(exception.message ?: "Unexpected Error occurred!")
         }
     }
