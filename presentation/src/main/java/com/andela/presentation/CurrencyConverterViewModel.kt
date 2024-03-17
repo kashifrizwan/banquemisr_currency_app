@@ -11,9 +11,8 @@ import javax.inject.Inject
 @HiltViewModel
 class CurrencyConverterViewModel @Inject constructor(
     private val getCurrenciesUseCase: GetCurrenciesUseCase,
-    private val getExchangeRatesUseCase: GetExchangeRatesUseCase,
-    useCaseExecutorProvider: UseCaseExecutorProvider
-) : BaseViewModel<CurrencyConverterViewState>(useCaseExecutorProvider) {
+    private val getExchangeRatesUseCase: GetExchangeRatesUseCase
+) : BaseViewModel<CurrencyConverterViewState>() {
 
     override fun initialState() = CurrencyConverterViewState()
 
